@@ -5,35 +5,47 @@ const Hour = require("../models/Hour");
 const router = express.Router();
 const Day = require("../models/Day");
 
-// 📌 Agendar una cita
 router.post("/create", verifyToken, async (req, res) => {
-    const { barber_id, date, time } = req.body;
+  console.log("Datos recibidos:", req.body);
+  const { barberId, date, time, cutType, extras } = req.body;
 
-    try {
-        // Verificar que la cita no esté ocupada
-        const exists = await Appointment.findOne({ barber_id, date, time });
-        if (exists) return res.status(400).json({ message: "Esa hora ya está ocupada" });
+  if (!mongoose.Types.ObjectId.isValid(barberId)) {
+    return res.status(400).json({ message: "ID de barbero inválido" });
+  }
 
-        // 🔹 Marcar la hora como "ocupada" en la colección Hour
-        await Hour.findOneAndUpdate(
-            { day_id: date, time },  // Buscar por la fecha y hora
-            { status: "ocupada" }    // Cambiar el estado a ocupada
-        );
+  if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+    return res.status(400).json({ message: "ID de usuario inválido" });
+  }
 
-        // Crear la nueva cita
-        const appointment = new Appointment({
-            user_id: req.user.id,
-            barber_id,
-            date,
-            time
-        });
+  try {
+    const exists = await Appointment.findOne({
+      barber_id: new mongoose.Types.ObjectId(barberId),
+      date,
+      time,
+    });
+    if (exists) return res.status(400).json({ message: "Esa hora ya está ocupada" });
 
-        await appointment.save();
-        
-        res.status(201).json({ message: "Cita agendada correctamente" });
-    } catch (error) {
-        res.status(500).json({ message: "Error al agendar cita", error });
-    }
+    await Hour.findOneAndUpdate(
+      { day_id: date, time },
+      { status: "ocupada" }
+    );
+
+    const appointment = new Appointment({
+      user_id: new mongoose.Types.ObjectId(req.user.id),
+      barber_id: new mongoose.Types.ObjectId(barberId),
+      date,
+      time,
+      cutType,
+      extras,
+    });
+
+    await appointment.save();
+
+    res.status(201).json({ message: "Cita agendada correctamente" });
+  } catch (error) {
+    console.error("Error al agendar cita:", error);
+    res.status(500).json({ message: "Error al agendar cita", error: error.message });
+  }
 });
 
 // 📌 Obtener citas de un usuario
