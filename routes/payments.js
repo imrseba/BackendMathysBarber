@@ -24,9 +24,9 @@ router.post("/create-preference", async (req, res) => {
           },
         ],
         back_urls: {
-          success: "http://localhost:5000/appointments?status=success",
-          failure: "http://localhost:5000/appointments?status=failure",
-          pending: "http://localhost:5000/appointments?status=pending",
+          success: "https://backendmathysbarber.onrender.com/appointments?status=success",
+          failure: "https://backendmathysbarber.onrender.com/appointments?status=failure",
+          pending: "https://backendmathysbarber.onrender.com/appointments?status=pending",
         },
         auto_return: "approved",
       },
